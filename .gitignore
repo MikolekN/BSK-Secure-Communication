@@ -160,3 +160,5 @@ cython_debug/
 .idea/
 
 temp/
+public_keys/
+private_keys/
