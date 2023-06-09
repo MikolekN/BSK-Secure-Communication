@@ -19,6 +19,7 @@ class ConnectionWindow:
     message_pic = None
     file_pic = None
     file_path = None
+    progress_bar = None
 
     def close_connection(self):
         # code for disconnecting, etc.
@@ -54,19 +55,20 @@ class ConnectionWindow:
         self.window.rowconfigure(1, weight=2)
         self.window.rowconfigure(2, weight=0)
         self.window.rowconfigure(3, weight=1)
-        self.window.rowconfigure(4, weight=0)
-        self.window.rowconfigure(5, weight=1)
+        self.window.rowconfigure(4, weight=1)
+        self.window.rowconfigure(5, weight=0)
         self.window.rowconfigure(6, weight=1)
         self.window.rowconfigure(7, weight=1)
-        self.window.rowconfigure(8, weight=0)
+        self.window.rowconfigure(8, weight=1)
+        self.window.rowconfigure(9, weight=0)
 
         ttk.Frame(self.window, width=5).grid(column=0, rowspan=9)
         ttk.Frame(self.window, width=5).grid(column=4, rowspan=9)
 
         ttk.Frame(self.window, height=5).grid(columnspan=5, row=0)
         ttk.Frame(self.window, height=5).grid(columnspan=5, row=2)
-        ttk.Frame(self.window, height=5).grid(columnspan=5, row=4)
-        ttk.Frame(self.window, height=5).grid(columnspan=5, row=8)
+        ttk.Frame(self.window, height=5).grid(columnspan=5, row=5)
+        ttk.Frame(self.window, height=5).grid(columnspan=5, row=9)
 
         myFont = tk.font.Font(size=10, family='Arial', weight='normal', slant='roman', underline=False)
 
@@ -90,19 +92,22 @@ class ConnectionWindow:
         self.input_space.delete(0, len(self.input_space.get()))
 
     def send_file(self):
-        self.file_path = filedialog.askopenfilename(initialdir="/",
-                                              title="Select a File",
-                                              filetypes=(("Text files",
-                                                          "*.txt*"),
-                                                         ("all files",
-                                                          "*.*")))
+        self.file_path = filedialog.askopenfilename(initialdir="/", title="Select a File",
+                                                    filetypes=(("Text files", "*.txt*"), ("all files", "*.*")))
         # code for sending a file
 
     def connect(self):
         self.connected_label.config(text="Awaiting connection...")
         # code for connecting to server
-        self.connected_label.config(text="Connected.")
+        self.connected_label.config(text="connected")
         self.address_label.config(text="192.168.0.0:1234")
+        self.connect_button.config(text="Disconnect", command=self.disconnect)
+
+    def disconnect(self):
+        # code for disconnecting from server
+        self.connected_label.config(text="disconnected")
+        self.address_label.config(text="")
+        self.connect_button.config(text="Connect", command=self.connect)
 
     def layout(self):
         self.update_logs()
@@ -114,11 +119,13 @@ class ConnectionWindow:
         self.file_pic = tk.PhotoImage(file='images/file15.gif')
         self.send_file_button = ttk.Button(self.window, image=self.file_pic, command=self.send_file)
         self.send_file_button.grid(column=3, row=3, sticky='e')
+        self.progress_bar = ttk.Progressbar(self.window, orient='horizontal', mode='determinate', length=350)
+        self.progress_bar.grid(column=1, columnspan=3, row=4)
         self.connection_status_label = tk.Label(self.window, text="Connection status:")
-        self.connection_status_label.grid(column=1, row=5)
+        self.connection_status_label.grid(column=1, row=6)
         self.connected_label = ttk.Label(self.window, text="disconnected")
-        self.connected_label.grid(column=1, row=6)
+        self.connected_label.grid(column=1, row=7)
         self.address_label = ttk.Label(self.window, text="")
-        self.address_label.grid(column=1, row=7)
+        self.address_label.grid(column=1, row=8)
         self.connect_button = ttk.Button(self.window, text="Connect", command=self.connect)
-        self.connect_button.grid(column=2, columnspan=2, row=5, rowspan=3, sticky='e')
+        self.connect_button.grid(column=2, columnspan=2, row=6, rowspan=3, sticky='e')
