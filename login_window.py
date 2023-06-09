@@ -3,8 +3,8 @@ from tkinter import font
 from tkinter import ttk
 import os.path
 from os.path import exists
-from hashlib import sha256
-import rsa
+
+import key
 
 
 class LoginWindow:
@@ -137,15 +137,10 @@ class LoginWindow:
         if self.password.get() != self.confirm_password.get():
             self.response.config(text="You password and confiramtion need to match!")
             return
-
-        hash = sha256(self.password.get().encode()).hexdigest()
-        public_key, private_key = rsa.newkeys(1024)
-        with open(f"{os.path.curdir}/public_keys/{self.login.get()}.pem", "w") as f:
-            f.write(public_key.save_pkcs1("PEM").decode('utf8'))
-        # zaszyfrowanie klucza prywatnego hashem hasła używając AES
-        with open(f"{os.path.curdir}/private_keys/{self.login.get()}.pem", "w") as f:
-            f.write(private_key.save_pkcs1("PEM").decode('utf8'))
-        self.response.config(text="Registered!")
+        if key.Key.set_keys(self.login.get(), self.password.get()):
+            self.response.config(text="Registered!")
+        else:
+            self.response.config(text="There was an error while registering!")
 
     def login_func(self):
         if self.login.get() == "":
@@ -158,15 +153,12 @@ class LoginWindow:
                 or not exists(f"{os.path.curdir}/private_keys/{self.login.get()}.pem"):
             self.response.config(text="There is no user with that login!")
             return
-        # sprawdzenie poprawności hasła
-        with open(f"{os.path.curdir}/public_keys/{self.login.get()}.pem", "r") as f:
-            key_data = f.read()
-            public_key = rsa.PublicKey.load_pkcs1(key_data.encode('utf-8'))
 
-
-
-        self.window.destroy()
-        self.result = True
+        if key.Key.check_password(self.login.get(), self.password.get()):
+            self.window.destroy()
+            self.result = True
+        else:
+            self.response.config(text="Wrong password!")
 
     def switch_to_login(self):
         self.window.title("Logowanie: Bezpieczeństwo Systemów Komputerowych by 184474 & 184440")
