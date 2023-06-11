@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import font
 from tkinter import filedialog
 from tkinter import ttk
+import dark_theme
 
 
 class ConnectionWindow:
@@ -20,12 +21,15 @@ class ConnectionWindow:
     file_pic = None
     file_path = None
     progress_bar = None
+    theme = None
 
     def close_connection(self):
         # code for disconnecting, etc.
         self.window.destroy()
 
-    def __init__(self):
+    def __init__(self, theme=True):
+        self.theme = theme
+
         self.window = tk.Tk()
         self.window.title("Wysyłanie: Bezpieczeństwo Systemów Komputerowych by 184474 & 184440")
 
@@ -73,17 +77,17 @@ class ConnectionWindow:
         myFont = tk.font.Font(size=10, family='Arial', weight='normal', slant='roman', underline=False)
 
         self.layout()
+        if self.theme:
+            dark_theme.make_dark_theme(self.window)
         self.window.mainloop()
 
     def update_logs(self):
-        if self.log_space:
-            self.log_space.destroy()
-        self.log_space = tk.LabelFrame(self.window, width=350, height=500)
-        self.log_space.grid(column=1, columnspan=3, row=1)
-        self.log_space.grid_propagate(False)
         for i in range(len(self.messages)):
             self.log_space.rowconfigure(i, weight=1)
-            tk.Label(self.log_space, text=self.messages[i], height=30).grid(row=i)
+            if self.theme:
+                tk.Label(self.log_space, text=self.messages[i], height=30, bg='#2d2d2d', fg='white').grid(row=i)
+            else:
+                tk.Label(self.log_space, text=self.messages[i], height=30).grid(row=i)
 
     def send_message(self):
         self.messages.append(self.input_space.get())
@@ -110,18 +114,29 @@ class ConnectionWindow:
         self.connect_button.config(text="Connect", command=self.connect)
 
     def layout(self):
+        self.log_space = tk.LabelFrame(self.window, width=350, height=500)
+        if self.theme:
+            self.log_space.config(bg='#2d2d2d')
+        self.log_space.grid(column=1, columnspan=3, row=1)
+        self.log_space.grid_propagate(False)
         self.update_logs()
         self.input_space = ttk.Entry(self.window, width=40)
         self.input_space.grid(column=1, row=3)
-        self.message_pic = tk.PhotoImage(file='images/arrowright15.gif')
+        if self.theme:
+            self.message_pic = tk.PhotoImage(file='images/arrowright15_dark.gif')
+        else:
+            self.message_pic = tk.PhotoImage(file='images/arrowright15.gif')
         self.send_message_button = ttk.Button(self.window, image=self.message_pic, command=self.send_message)
         self.send_message_button.grid(column=2, row=3, sticky='e')
-        self.file_pic = tk.PhotoImage(file='images/file15.gif')
+        if self.theme:
+            self.file_pic = tk.PhotoImage(file='images/file15_dark.gif')
+        else:
+            self.file_pic = tk.PhotoImage(file='images/file15.gif')
         self.send_file_button = ttk.Button(self.window, image=self.file_pic, command=self.send_file)
         self.send_file_button.grid(column=3, row=3, sticky='e')
         self.progress_bar = ttk.Progressbar(self.window, orient='horizontal', mode='determinate', length=350)
         self.progress_bar.grid(column=1, columnspan=3, row=4)
-        self.connection_status_label = tk.Label(self.window, text="Connection status:")
+        self.connection_status_label = ttk.Label(self.window, text="Connection status:")
         self.connection_status_label.grid(column=1, row=6)
         self.connected_label = ttk.Label(self.window, text="disconnected")
         self.connected_label.grid(column=1, row=7)

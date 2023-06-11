@@ -3,7 +3,7 @@ from tkinter import font
 from tkinter import ttk
 import os.path
 from os.path import exists
-
+import dark_theme
 import key
 
 
@@ -20,8 +20,11 @@ class LoginWindow:
     secondary_button = None
     response = None
     result = False
+    theme = None
 
-    def __init__(self):
+    def __init__(self, theme=True):
+        self.theme = theme
+
         self.window = tk.Tk()
 
         self.window.resizable(False, False)
@@ -66,6 +69,8 @@ class LoginWindow:
         myFont = tk.font.Font(size=10, family='Arial', weight='normal', slant='roman', underline=False)
 
         self.logging_in()
+        if self.theme:
+            dark_theme.make_dark_theme(self.window)
         self.window.mainloop()
 
     def registration(self):
@@ -92,6 +97,9 @@ class LoginWindow:
         self.secondary_prompt.grid(column=1, columnspan=3, row=6, sticky='w')
         self.secondary_button = tk.Button(self.window, text="Login", command=self.switch_to_login, bd=0, fg='blue',
                                           font=tk.font.Font(size=10, slant='italic'))
+        if self.theme:
+            self.secondary_button.config(bg='#2d2d2d', fg='red')
+
         self.secondary_button.grid(column=1, columnspan=3, row=6, sticky='e')
 
         self.response = ttk.Label(self.window, text="")
@@ -119,6 +127,8 @@ class LoginWindow:
                                           fg='blue',
                                           font=tk.font.Font(size=10, slant='italic'))
         self.secondary_button.grid(column=1, columnspan=3, row=6, sticky='e')
+        if self.theme:
+            self.secondary_button.config(bg='#2d2d2d', fg='red')
 
         self.response = ttk.Label(self.window, text="")
         self.response.grid(columnspan=5, row=8)
