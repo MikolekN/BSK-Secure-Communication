@@ -7,6 +7,10 @@ from hashlib import sha256
 
 import AES
 
+"""
+key.py
+"""
+
 
 class Key:
 
@@ -22,7 +26,7 @@ class Key:
         with open(f"{os.path.curdir}/private_keys/{login}.pem", "r") as f:
             key_data = f.read()
             ciphered_private_key = rsa.PrivateKey.load_pkcs1(key_data.encode('utf8'))
-        private_key = AES.AES.deciper(ciphered_private_key, sha256(password.encode()).hexdigest())
+        private_key = AES.AES.decrypt_message(ciphered_private_key, sha256(password.encode()).hexdigest())
         return private_key
 
     @staticmethod
@@ -32,7 +36,8 @@ class Key:
     @staticmethod
     def check_password(login, password):
         public_key, private_key = Key.get_keys(login, password)
-        control_message = ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for i in range(64))
+        control_message = ''.join(
+            random.choice(string.ascii_letters + string.digits + string.punctuation) for i in range(64))
         returned_message = rsa.decrypt(rsa.encrypt(control_message.encode(), public_key), private_key).decode('utf8')
         return control_message == returned_message
 
@@ -43,7 +48,7 @@ class Key:
 
     @staticmethod
     def __set_private_key(login, password, private_key):
-        ciphered_private_key = AES.AES.ciper(private_key, sha256(password.encode()).hexdigest())
+        ciphered_private_key = AES.AES.encrypt_message(private_key, sha256(password.encode()).hexdigest())
         with open(f"{os.path.curdir}/private_keys/{login}.pem", "w") as f:
             f.write(ciphered_private_key.save_pkcs1("PEM").decode('utf8'))
 

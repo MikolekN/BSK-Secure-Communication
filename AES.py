@@ -1,9 +1,28 @@
-class AES:
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad
+"""
+AES.py
+"""
+
+
+class AES_algorithm:
 
     @staticmethod
-    def ciper(message, key):
+    def encrypt_message(message, key):
+        cipher = AES.new(key, AES.MODE_EAX)
+        ciphertext, tag = cipher.encrypt_and_digest(message)
+        return ciphertext, cipher.nonce, tag
+
+    @staticmethod
+    def decrypt_message(message, key, nonce, tag):
+        cipher = AES.new(key, AES.MODE_EAX, nonce)
+        plaintext = cipher.decrypt_and_verify(message, tag)
+        return plaintext
+
+    @staticmethod
+    def encrypt_file(message, key):
         raise NotImplemented
 
     @staticmethod
-    def deciper(message, key):
+    def decrypt_file(message, key):
         raise NotImplemented
