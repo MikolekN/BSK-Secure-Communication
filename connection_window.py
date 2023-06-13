@@ -4,6 +4,11 @@ from tkinter import font
 from tkinter import filedialog
 from tkinter import ttk
 import dark_theme
+from constants import DARK_MODE
+
+"""
+connection_window.py
+"""
 
 
 class ConnectionWindow:
@@ -21,15 +26,12 @@ class ConnectionWindow:
     file_pic = None
     file_path = None
     progress_bar = None
-    theme = None
 
     def close_connection(self):
         # code for disconnecting, etc.
         self.window.destroy()
 
-    def __init__(self, theme=True):
-        self.theme = theme
-
+    def __init__(self):
         self.window = tk.Tk()
         self.window.title("Wysyłanie: Bezpieczeństwo Systemów Komputerowych by 184474 & 184440")
 
@@ -77,14 +79,14 @@ class ConnectionWindow:
         myFont = tk.font.Font(size=10, family='Arial', weight='normal', slant='roman', underline=False)
 
         self.layout()
-        if self.theme:
+        if DARK_MODE:
             dark_theme.make_dark_theme(self.window)
         self.window.mainloop()
 
     def update_logs(self):
         for i in range(len(self.messages)):
             self.log_space.rowconfigure(i, weight=1)
-            if self.theme:
+            if DARK_MODE:
                 tk.Label(self.log_space, text=self.messages[i], height=30, bg='#2d2d2d', fg='white').grid(row=i)
             else:
                 tk.Label(self.log_space, text=self.messages[i], height=30).grid(row=i)
@@ -115,20 +117,20 @@ class ConnectionWindow:
 
     def layout(self):
         self.log_space = tk.LabelFrame(self.window, width=350, height=500)
-        if self.theme:
+        if DARK_MODE:
             self.log_space.config(bg='#2d2d2d')
         self.log_space.grid(column=1, columnspan=3, row=1)
         self.log_space.grid_propagate(False)
         self.update_logs()
         self.input_space = ttk.Entry(self.window, width=40)
         self.input_space.grid(column=1, row=3)
-        if self.theme:
+        if DARK_MODE:
             self.message_pic = tk.PhotoImage(file='images/arrowright15_dark.gif')
         else:
             self.message_pic = tk.PhotoImage(file='images/arrowright15.gif')
         self.send_message_button = ttk.Button(self.window, image=self.message_pic, command=self.send_message)
         self.send_message_button.grid(column=2, row=3, sticky='e')
-        if self.theme:
+        if DARK_MODE:
             self.file_pic = tk.PhotoImage(file='images/file15_dark.gif')
         else:
             self.file_pic = tk.PhotoImage(file='images/file15.gif')
