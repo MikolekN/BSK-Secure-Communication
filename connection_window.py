@@ -27,11 +27,15 @@ class ConnectionWindow:
     file_path = None
     progress_bar = None
 
+    client = None
+
     def close_connection(self):
         # code for disconnecting, etc.
         self.window.destroy()
 
-    def __init__(self):
+    def __init__(self, client):
+        self.client = client
+
         self.window = tk.Tk()
         self.window.title("Wysyłanie: Bezpieczeństwo Systemów Komputerowych by 184474 & 184440")
 
@@ -92,9 +96,10 @@ class ConnectionWindow:
                 tk.Label(self.log_space, text=self.messages[i], height=30).grid(row=i)
 
     def send_message(self):
-        self.messages.append(self.input_space.get())
+        message = self.input_space.get()
+        self.messages.append(message)
         self.update_logs()
-        # code for sending the message
+        self.client.send_message(message)
         self.input_space.delete(0, len(self.input_space.get()))
 
     def send_file(self):
@@ -104,13 +109,15 @@ class ConnectionWindow:
 
     def connect(self):
         self.connected_label.config(text="Awaiting connection...")
-        # code for connecting to server
-        self.connected_label.config(text="connected")
-        self.address_label.config(text="192.168.0.0:1234")
-        self.connect_button.config(text="Disconnect", command=self.disconnect)
+        if self.client.connect():
+            self.connected_label.config(text="connected")
+            self.address_label.config(text="192.168.0.0:1234")
+            self.connect_button.config(text="Disconnect", command=self.disconnect)
+        else:
+            self.connected_label.config(text="disconnected")
 
     def disconnect(self):
-        # code for disconnecting from server
+        self.client.disconnect()
         self.connected_label.config(text="disconnected")
         self.address_label.config(text="")
         self.connect_button.config(text="Connect", command=self.connect)

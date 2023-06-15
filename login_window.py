@@ -17,14 +17,17 @@ class LoginWindow:
     login_label = None
     password_label = None
     confirm_password_label = None
-    login = None
-    password = None
+    login_entry = None
+    password_entry = None
     confirm_password = None
     main_button = None
     secondary_prompt = None
     secondary_button = None
     response = None
+
     result = False
+    login = None
+    password = None
 
     def __init__(self):
         self.window = tk.Tk()
@@ -86,10 +89,10 @@ class LoginWindow:
         self.confirm_password_label = ttk.Label(self.window, text='Confirm password:')
         self.confirm_password_label.grid(column=1, row=3)
 
-        self.login = ttk.Entry(self.window)
-        self.login.grid(column=3, row=1)
-        self.password = ttk.Entry(self.window)
-        self.password.grid(column=3, row=2)
+        self.login_entry = ttk.Entry(self.window)
+        self.login_entry.grid(column=3, row=1)
+        self.password_entry = ttk.Entry(self.window)
+        self.password_entry.grid(column=3, row=2)
         self.confirm_password = ttk.Entry(self.window)
         self.confirm_password.grid(column=3, row=3)
 
@@ -116,10 +119,10 @@ class LoginWindow:
         self.password_label = ttk.Label(self.window, text='Password:')
         self.password_label.grid(column=1, row=2, rowspan=2)
 
-        self.login = ttk.Entry(self.window)
-        self.login.grid(column=3, row=1)
-        self.password = ttk.Entry(self.window)
-        self.password.grid(column=3, row=2, rowspan=2)
+        self.login_entry = ttk.Entry(self.window)
+        self.login_entry.grid(column=3, row=1)
+        self.password_entry = ttk.Entry(self.window)
+        self.password_entry.grid(column=3, row=2, rowspan=2)
 
         self.main_button = ttk.Button(self.window, text="Login", command=self.login_func)
         self.main_button.grid(column=1, columnspan=3, row=5)
@@ -136,37 +139,39 @@ class LoginWindow:
         self.response.grid(columnspan=5, row=8)
 
     def register_func(self):
-        if self.login.get() == "":
+        if self.login_entry.get() == "":
             self.response.config(text="You need to provide a login!")
             return
-        if self.password.get() == "":
+        if self.password_entry.get() == "":
             self.response.config(text="You need to provide a password!")
             return
-        if exists(f"{os.path.curdir}/public_keys/{self.login.get()}.pem") \
-                or exists(f"{os.path.curdir}/private_keys/{self.login.get()}.pem"):
+        if exists(f"{os.path.curdir}/public_keys/{self.login_entry.get()}.pem") \
+                or exists(f"{os.path.curdir}/private_keys/{self.login_entry.get()}.pem"):
             self.response.config(text="There already exists a user with that login!")
             return
-        if self.password.get() != self.confirm_password.get():
+        if self.password_entry.get() != self.confirm_password.get():
             self.response.config(text="You password and confiramtion need to match!")
             return
-        if key.Key.set_keys(self.login.get(), self.password.get()):
+        if key.Key.set_keys(self.login_entry.get(), self.password_entry.get()):
             self.response.config(text="Registered!")
         else:
             self.response.config(text="There was an error while registering!")
 
     def login_func(self):
-        if self.login.get() == "":
+        if self.login_entry.get() == "":
             self.response.config(text="You need to provide a login!")
             return
-        if self.password.get() == "":
+        if self.password_entry.get() == "":
             self.response.config(text="You need to provide a password!")
             return
-        if not exists(f"{os.path.curdir}/public_keys/{self.login.get()}.pem") \
-                or not exists(f"{os.path.curdir}/private_keys/{self.login.get()}.pem"):
+        if not exists(f"{os.path.curdir}/public_keys/{self.login_entry.get()}.pem") \
+                or not exists(f"{os.path.curdir}/private_keys/{self.login_entry.get()}.pem"):
             self.response.config(text="There is no user with that login!")
             return
 
-        if key.Key.check_password(self.login.get(), self.password.get()):
+        if key.Key.check_password(self.login_entry.get(), self.password_entry.get()):
+            self.login = self.login_entry.get()
+            self.password = self.password_entry.get()
             self.window.destroy()
             self.result = True
         else:
@@ -177,7 +182,7 @@ class LoginWindow:
         self.confirm_password_label.destroy()
         self.confirm_password.destroy()
         self.password_label.grid(column=1, row=2, rowspan=2)
-        self.password.grid(column=3, row=2, rowspan=2)
+        self.password_entry.grid(column=3, row=2, rowspan=2)
         self.main_button.config(text="Login", command=self.login_func)
         self.secondary_prompt.config(text="If you want to create a new key:")
         self.secondary_button.config(text="Register", command=self.switch_to_register)
@@ -186,7 +191,7 @@ class LoginWindow:
     def switch_to_register(self):
         self.window.title("Rejestracja: Bezpieczeństwo Systemów Komputerowych by 184474 & 184440")
         self.password_label.grid(column=1, row=2, rowspan=1)
-        self.password.grid(column=3, row=2, rowspan=1)
+        self.password_entry.grid(column=3, row=2, rowspan=1)
         self.confirm_password_label = ttk.Label(self.window, text='Confirm password:')
         self.confirm_password_label.grid(column=1, row=3)
         self.confirm_password = ttk.Entry(self.window)
