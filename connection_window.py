@@ -1,3 +1,4 @@
+import threading
 import time
 import tkinter as tk
 from tkinter import font
@@ -28,10 +29,7 @@ class ConnectionWindow:
     progress_bar = None
 
     client = None
-
-    def close_connection(self):
-        # code for disconnecting, etc.
-        self.window.destroy()
+    receive_thread = None
 
     def __init__(self, client):
         self.client = client
@@ -85,42 +83,9 @@ class ConnectionWindow:
         self.layout()
         if DARK_MODE:
             dark_theme.make_dark_theme(self.window)
+        self.receive_thread = threading.Thread(target=self.receive_messages)
+        self.receive_thread.start()
         self.window.mainloop()
-
-    def update_logs(self):
-        for i in range(len(self.messages)):
-            self.log_space.rowconfigure(i, weight=1)
-            if DARK_MODE:
-                tk.Label(self.log_space, text=self.messages[i], height=30, bg='#2d2d2d', fg='white').grid(row=i)
-            else:
-                tk.Label(self.log_space, text=self.messages[i], height=30).grid(row=i)
-
-    def send_message(self):
-        message = self.input_space.get()
-        self.messages.append(message)
-        self.update_logs()
-        self.client.send_message(message)
-        self.input_space.delete(0, len(self.input_space.get()))
-
-    def send_file(self):
-        self.file_path = filedialog.askopenfilename(initialdir="/", title="Select a File",
-                                                    filetypes=(("Text files", "*.txt*"), ("all files", "*.*")))
-        # code for sending a file
-
-    def connect(self):
-        self.connected_label.config(text="Awaiting connection...")
-        if self.client.connect():
-            self.connected_label.config(text="connected")
-            self.address_label.config(text="192.168.0.0:1234")
-            self.connect_button.config(text="Disconnect", command=self.disconnect)
-        else:
-            self.connected_label.config(text="disconnected")
-
-    def disconnect(self):
-        self.client.disconnect()
-        self.connected_label.config(text="disconnected")
-        self.address_label.config(text="")
-        self.connect_button.config(text="Connect", command=self.connect)
 
     def layout(self):
         self.log_space = tk.LabelFrame(self.window, width=350, height=500)
@@ -153,3 +118,51 @@ class ConnectionWindow:
         self.address_label.grid(column=1, row=8)
         self.connect_button = ttk.Button(self.window, text="Connect", command=self.connect)
         self.connect_button.grid(column=2, columnspan=2, row=6, rowspan=3, sticky='e')
+
+    def update_logs(self):
+        for i in range(len(self.messages)):
+            self.log_space.rowconfigure(i, weight=1)
+            if DARK_MODE:
+                tk.Label(self.log_space, text=self.messages[i], height=30, bg='#2d2d2d', fg='white').grid(row=i)
+            else:
+                tk.Label(self.log_space, text=self.messages[i], height=30).grid(row=i)
+
+    def send_message(self):
+        message = self.input_space.get()
+        self.messages.append(message)
+        self.update_logs()
+        # self.client.send_message(message)
+        self.input_space.delete(0, len(self.input_space.get()))
+
+    def send_file(self):
+        self.file_path = filedialog.askopenfilename(initialdir="/", title="Select a File",
+                                                    filetypes=(("Text files", "*.txt*"), ("all files", "*.*")))
+        # self.client.send_file(message)
+
+    def receive_messages(self):
+        while True:
+            time.sleep(1)
+            while len(self.client.messages) > 0:
+                message = self.client.messages.pop(0)
+                self.messages.append(message)
+                self.update_logs()
+
+    def connect(self):
+        self.connected_label.config(text="Awaiting connection...")
+        if self.client.connect():
+            self.connected_label.config(text="connected")
+            self.address_label.config(text="192.168.0.0:1234")
+            self.connect_button.config(text="Disconnect", command=self.disconnect)
+        else:
+            self.connected_label.config(text="disconnected")
+
+    def disconnect(self):
+        self.client.disconnect()
+        self.connected_label.config(text="disconnected")
+        self.address_label.config(text="")
+        self.connect_button.config(text="Connect", command=self.connect)
+
+    def close_connection(self):
+        # code for disconnecting, etc.
+        self.window.destroy()
+

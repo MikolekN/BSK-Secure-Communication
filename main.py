@@ -12,7 +12,7 @@ log = LoginWindow()
 if log.result:
     if log.login is not None and log.password is not None:
         client = Client(log.login, log.password)
-        con = ConnectionWindow()
+        con = ConnectionWindow(client)
 
 """password = "HasloHallo123456"
 key = PBKDF2(password, b"", dkLen=32)

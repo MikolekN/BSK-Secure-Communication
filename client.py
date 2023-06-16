@@ -22,6 +22,8 @@ class Client:
     receive_thread = None
     send_thread = None
 
+    messages = []
+
     def __init__(self, login, password):
         self.login = login
         self.password = password
@@ -63,7 +65,7 @@ class Client:
 
     def receive_message(self):
         message = self.sock.recv(1024).decode('utf-8')
-        return message
+        self.messages.append(message)
 
     def send_file(self):
         pass
