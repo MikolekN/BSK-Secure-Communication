@@ -131,7 +131,7 @@ class ConnectionWindow:
         message = self.input_space.get()
         self.messages.append(message)
         self.update_logs()
-        # self.client.send_message(message)
+        self.client.send_message(message)
         self.input_space.delete(0, len(self.input_space.get()))
 
     def send_file(self):

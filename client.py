@@ -57,7 +57,16 @@ class Client:
 
     # Ogólne otrzymywanie wiadomości i plików
     def receive(self):
-        pass
+        while True:
+            msg_type = self.sock.recv(1024).decode()
+            if not msg_type:
+                break
+            if msg_type == "t":  # text
+                if not self.receive_message():
+                    break
+            elif msg_type == "f":  # file
+                if not self.receive_file():
+                    break
 
     def send_message(self, message):
         self.sock.send("t".encode())
@@ -65,7 +74,10 @@ class Client:
 
     def receive_message(self):
         message = self.sock.recv(1024).decode('utf-8')
+        if not message:
+            return False
         self.messages.append(message)
+        return True
 
     def send_file(self):
         pass
