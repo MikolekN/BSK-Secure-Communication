@@ -34,6 +34,10 @@ dark_theme = {
 
 def make_dark_theme(window):
     style = ttk.Style()
-    style.theme_create('dark', parent="clam", settings=dark_theme)
-    style.theme_use('dark')
-    window.configure(bg='#2d2d2d')
+    try:
+        style.theme_create('dark', parent="clam", settings=dark_theme)
+    except:
+        pass
+    finally:
+        style.theme_use('dark')
+        window.configure(bg='#2d2d2d')

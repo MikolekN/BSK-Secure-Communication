@@ -1,6 +1,10 @@
 import socket
+import sys
+
 import rsa
 import threading
+import os
+from time import sleep
 
 import key
 
@@ -72,6 +76,20 @@ class Client:
         self.sock.send("t".encode())
         self.sock.send(message.encode())
 
+    def send_file(self, file_path):
+        self.sock.send("f".encode())
+        file_name = os.path.basename(file_path)
+        dir_path = os.path.dirname(file_path)
+        new_file_path = dir_path + "/new_" + file_name
+        file_size = os.path.getsize(file_path)
+        message = f"{new_file_path}|{file_size}"
+        self.sock.send(message.encode())
+        sleep(2)
+        with open(file_path, "rb") as file:
+            while True:
+                message = file.read(1024)
+                self.sock.send(message)
+
     def receive_message(self):
         message = self.sock.recv(1024).decode('utf-8')
         if not message:
@@ -79,8 +97,17 @@ class Client:
         self.messages.append(message)
         return True
 
-    def send_file(self):
-        pass
-
     def receive_file(self):
-        pass
+        message = self.sock.recv(1024)
+        file_path, file_size = message.decode('utf-8').split("|")
+        file_bytes = b""
+        while True:
+            message = self.sock.recv(1024)
+            if not message:
+                return False
+            file_bytes += message
+            if sys.getsizeof(file_bytes) - 33 >= int(file_size):
+                break
+        with open(file_path, "wb") as file:
+            file.write(file_bytes)
+        return True
