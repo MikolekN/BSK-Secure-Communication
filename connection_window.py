@@ -2,10 +2,10 @@ import threading
 import time
 import tkinter as tk
 from tkinter import font
-from tkinter import filedialog
+from tkinter import filedialog, simpledialog
 from tkinter import ttk
 import dark_theme
-from constants import DARK_MODE
+from constants import DARK_MODE, MODES
 
 """
 connection_window.py
@@ -25,7 +25,6 @@ class ConnectionWindow:
     messages = ["Hallo1", "Hallo2", "Hallo3"]
     message_pic = None
     file_pic = None
-    file_path = None
     progress_bar = None
 
     client = None
@@ -135,8 +134,11 @@ class ConnectionWindow:
         self.input_space.delete(0, len(self.input_space.get()))
 
     def send_file(self):
-        self.file_path = filedialog.askopenfilename(initialdir="/", title="Select a File",
+        file_path = filedialog.askopenfilename(initialdir="/", title="Select a File",
                                                     filetypes=(("Text files", "*.txt*"), ("all files", "*.*")))
+        mode = simpledialog.askstring(title="Select a mode", prompt="\n".join(MODES))
+        if mode not in MODES:
+            return
         # self.client.send_file(message)
 
     def receive_messages(self):

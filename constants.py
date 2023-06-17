@@ -2,4 +2,5 @@
 constants.py
 """
 
-DARK_MODE = False
+DARK_MODE = True
+MODES = ["ECB", "CBC"]
