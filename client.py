@@ -18,7 +18,6 @@ class Client:
 
     sock = None
 
-    server_public_key = None
     session_key = None
 
     receive_thread = None
@@ -40,7 +39,6 @@ class Client:
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.connect((HOST, PORT))
-            self.server_public_key = rsa.PublicKey.load_pkcs1(self.sock.recv(1024))
             self.sock.send(self.public_key.save_pkcs1())
             enc_session_key = self.sock.recv(1024)
             self.session_key = rsa.decrypt(enc_session_key, self.private_key)
@@ -48,7 +46,6 @@ class Client:
             if self.sock is not None:
                 self.sock.close()
                 self.sock = None
-            self.server_public_key = None
             self.session_key = None
             return False
         self.receive_thread = threading.Thread(target=self.receive)

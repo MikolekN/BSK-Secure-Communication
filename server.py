@@ -3,16 +3,13 @@ import threading
 import socket
 import rsa
 import os
-
-host = '127.0.0.1'
-port = 20001
+from constants import HOST, PORT
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind((host, port))
+server.bind((HOST, PORT))
 
 server.listen()
 clients = []
-nicknames = []
 public_keys = []
 
 server_public_key, server_private_key = rsa.newkeys(1024)
@@ -52,7 +49,6 @@ def receive_client_connection():
     while True:
         if len(clients) < 2:
             client, address = server.accept()
-            client.send(server_public_key.save_pkcs1('PEM'))
             print(f'connection is established with {str(address)}')
             clients.append(client)
             client_public_key = client.recv(1024)
