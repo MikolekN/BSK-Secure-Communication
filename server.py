@@ -1,4 +1,3 @@
-import os
 import threading
 import socket
 import rsa
@@ -10,10 +9,6 @@ server.bind((HOST, PORT))
 
 server.listen()
 clients = []
-public_keys = []
-
-server_public_key, server_private_key = rsa.newkeys(1024)
-print(server_public_key)
 
 
 def generate_session_key(length=32):
@@ -34,7 +29,6 @@ def handle_client_connection(client):
         if not message:
             break
         broadcast_message(message, client)
-        print(message)
 
     client.close()
     index = clients.index(client)
@@ -53,7 +47,6 @@ def receive_client_connection():
             clients.append(client)
             client_public_key = client.recv(1024)
             print(client_public_key)
-            public_keys.append(client_public_key)
             enc_session_key = rsa.encrypt(session_key, rsa.PublicKey.load_pkcs1(client_public_key))
             client.send(enc_session_key)
             thread = threading.Thread(target=handle_client_connection, args=(client,))

@@ -57,36 +57,42 @@ class Client:
     def disconnect(self):
         pass
 
-    # Ogólne otrzymywanie wiadomości i plików
-    def receive(self):
-        while True:
-            msg_type = self.sock.recv(1024).decode()
-            if not msg_type:
-                break
-            if msg_type == "t":  # text
-                if not self.receive_message():
-                    break
-            elif msg_type == "f":  # file
-                if not self.receive_file():
-                    break
-
-    def send_message(self, message):
-        self.sock.send("t".encode('utf-8'))
-        ciphered_message = AES.AES_algorithm.encrypt_message_CBC(message, self.session_key)
+    def send_message(self, message, mode):
+        message_info = f"t|{mode}"
+        ciphered_message_info = AES.AES_algorithm.encrypt_message_CBC(message_info, self.session_key)
+        self.sock.send(ciphered_message_info)
+        if mode == "ECB":
+            ciphered_message = AES.AES_algorithm.encrypt_message_ECB(message, self.session_key)
+        elif mode == "CBC":
+            ciphered_message = AES.AES_algorithm.encrypt_message_CBC(message, self.session_key)
+        else:
+            return
         self.sock.send(ciphered_message)
 
-    def send_file(self, file_path):
-        self.sock.send("f".encode('utf-8'))
+    def send_file(self, file_path, mode):
+        message_info = f"f|{mode}"
+        ciphered_message_info = AES.AES_algorithm.encrypt_message_CBC(message_info, self.session_key)
+        self.sock.send(ciphered_message_info)
         file_name = os.path.basename(file_path)
         dir_path = os.path.dirname(file_path)
         new_file_path = dir_path + "/new_" + file_name
         file_size = os.path.getsize(file_path)
         message = f"{new_file_path}|{file_size}"
-        ciphered_message = AES.AES_algorithm.encrypt_message_CBC(message, self.session_key)
+        if mode == "ECB":
+            ciphered_message = AES.AES_algorithm.encrypt_message_ECB(message, self.session_key)
+        elif mode == "CBC":
+            ciphered_message = AES.AES_algorithm.encrypt_message_CBC(message, self.session_key)
+        else:
+            return
         sleep(1)
         self.sock.send(ciphered_message)
         sleep(1)
-        ciphered_file = AES.AES_algorithm.encrypt_file_CBC(file_path, self.session_key)
+        if mode == "ECB":
+            ciphered_file = AES.AES_algorithm.encrypt_file_ECB(file_path, self.session_key)
+        elif mode == "CBC":
+            ciphered_file = AES.AES_algorithm.encrypt_file_CBC(file_path, self.session_key)
+        else:
+            return
         start = 0
         step = 1024
         end = step
@@ -97,30 +103,56 @@ class Client:
             start = end
             end += step
 
-    def receive_message(self):
+    def receive(self):
+        while True:
+            ciphered_message_info = self.sock.recv(1024)
+            message_info = AES.AES_algorithm.decrypt_message_CBC(ciphered_message_info, self.session_key)
+            msg_type, mode = message_info.split("|")
+            if not msg_type:
+                break
+            if msg_type == "t":  # text
+                if not self.receive_message(mode):
+                    break
+            elif msg_type == "f":  # file
+                if not self.receive_file(mode):
+                    break
+
+    def receive_message(self, mode):
         message = self.sock.recv(1024)
         if not message:
             return False
-        deciphered_message = AES.AES_algorithm.decrypt_message_CBC(message, self.session_key)
+        if mode == "ECB":
+            deciphered_message = AES.AES_algorithm.decrypt_message_ECB(message, self.session_key)
+        elif mode == "CBC":
+            deciphered_message = AES.AES_algorithm.decrypt_message_CBC(message, self.session_key)
+        else:
+            return
         self.messages.append(deciphered_message)
         return True
 
-    def receive_file(self):
+    def receive_file(self, mode):
         message = self.sock.recv(1024)
         if not message:
             return False
-        deciphered_message = AES.AES_algorithm.decrypt_message_CBC(message, self.session_key)
+        if mode == "ECB":
+            deciphered_message = AES.AES_algorithm.decrypt_message_ECB(message, self.session_key)
+        elif mode == "CBC":
+            deciphered_message = AES.AES_algorithm.decrypt_message_CBC(message, self.session_key)
+        else:
+            return
         file_path, file_size = deciphered_message.split("|")
         file_bytes = b""
         while True:
             message = self.sock.recv(1024)
             file_bytes += message
-            """if sys.getsizeof(file_bytes) - 33 >= int(file_size):
-                break"""
-            if message[-5:] == b"<END>":
+            if sys.getsizeof(file_bytes) - 33 >= int(file_size):
                 break
-        file_bytes = file_bytes[:-5]
-        deciphered_file_bytes = AES.AES_algorithm.decrypt_file_CBC(file_bytes, self.session_key)
+        if mode == "ECB":
+            deciphered_file_bytes = AES.AES_algorithm.decrypt_file_ECB(file_bytes, self.session_key)
+        elif mode == "CBC":
+            deciphered_file_bytes = AES.AES_algorithm.decrypt_file_CBC(file_bytes, self.session_key)
+        else:
+            return
         with open(file_path, "wb") as file:
             file.write(deciphered_file_bytes)
         return True

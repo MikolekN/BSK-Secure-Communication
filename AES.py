@@ -41,7 +41,6 @@ class AES_algorithm:
                     chunk += str.encode(padding_length * chr(padding_length))
                     finished = True
                 content += cipher.encrypt(chunk)
-            content += b"<END>"
         return content
 
     @staticmethod
@@ -57,6 +56,53 @@ class AES_algorithm:
         deciphered_file_bytes = b""
         while not finished:
             chunk, next_chunk = next_chunk, cipher.decrypt(content[start:end])
+            start = end
+            end += step
+            if len(next_chunk) == 0:
+                padding_length = chunk[-1]
+                chunk = chunk[:-padding_length]
+                finished = True
+            deciphered_file_bytes += chunk
+        return deciphered_file_bytes
+
+    @staticmethod
+    def encrypt_message_ECB(message, key):
+        cipher = AES.new(key, AES.MODE_ECB)
+        ciphertext = cipher.encrypt(pad(message.encode('utf-8'), AES.block_size))
+        return ciphertext
+
+    @staticmethod
+    def decrypt_message_ECB(message, key):
+        cipher = AES.new(key, AES.MODE_ECB)
+        plaintext = unpad(cipher.decrypt(message), AES.block_size).decode('utf-8')
+        return plaintext
+
+    @staticmethod
+    def encrypt_file_ECB(file_path, key):
+        cipher = AES.new(key, AES.MODE_ECB)
+        content = b""
+        finished = False
+        with open(file_path, "rb") as file:
+            while not finished:
+                chunk = file.read(1024)
+                if len(chunk) == 0 or len(chunk) % AES.block_size != 0:  # final block/chunk is padded before encryption
+                    padding_length = (AES.block_size - len(chunk) % AES.block_size) or AES.block_size
+                    chunk += str.encode(padding_length * chr(padding_length))
+                    finished = True
+                content += cipher.encrypt(chunk)
+        return content
+
+    @staticmethod
+    def decrypt_file_ECB(message, key):
+        cipher = AES.new(key, AES.MODE_ECB)
+        next_chunk = b""
+        finished = False
+        start = 0
+        step = 1024
+        end = step
+        deciphered_file_bytes = b""
+        while not finished:
+            chunk, next_chunk = next_chunk, cipher.decrypt(message[start:end])
             start = end
             end += step
             if len(next_chunk) == 0:

@@ -26,10 +26,14 @@ class ConnectionWindow:
     message_pic = None
     file_pic = None
     progress_bar = None
+    mode_label = None
+    mode_ecb_radiobutton = None
+    mode_cbc_radiobutton = None
 
     client = None
     receive_thread = None
     progress_bar_thread = None
+    mode = None
 
     def __init__(self, client):
         self.client = client
@@ -64,22 +68,24 @@ class ConnectionWindow:
         self.window.rowconfigure(2, weight=0)
         self.window.rowconfigure(3, weight=1)
         self.window.rowconfigure(4, weight=1)
-        self.window.rowconfigure(5, weight=0)
-        self.window.rowconfigure(6, weight=1)
+        self.window.rowconfigure(5, weight=1)
+        self.window.rowconfigure(6, weight=0)
         self.window.rowconfigure(7, weight=1)
         self.window.rowconfigure(8, weight=1)
-        self.window.rowconfigure(9, weight=0)
+        self.window.rowconfigure(9, weight=1)
+        self.window.rowconfigure(10, weight=0)
 
-        ttk.Frame(self.window, width=5).grid(column=0, rowspan=9)
-        ttk.Frame(self.window, width=5).grid(column=4, rowspan=9)
+        ttk.Frame(self.window, width=5).grid(column=0, rowspan=10)
+        ttk.Frame(self.window, width=5).grid(column=4, rowspan=10)
 
         ttk.Frame(self.window, height=5).grid(columnspan=5, row=0)
         ttk.Frame(self.window, height=5).grid(columnspan=5, row=2)
-        ttk.Frame(self.window, height=5).grid(columnspan=5, row=5)
-        ttk.Frame(self.window, height=5).grid(columnspan=5, row=9)
+        ttk.Frame(self.window, height=5).grid(columnspan=5, row=6)
+        ttk.Frame(self.window, height=5).grid(columnspan=5, row=10)
 
         myFont = tk.font.Font(size=10, family='Arial', weight='normal', slant='roman', underline=False)
 
+        self.mode = tk.StringVar()
         self.layout()
         if DARK_MODE:
             dark_theme.make_dark_theme(self.window)
@@ -112,6 +118,12 @@ class ConnectionWindow:
         self.send_file_button.grid(column=3, row=3, sticky='e')
         self.progress_bar = ttk.Progressbar(self.window, orient='horizontal', mode='determinate', length=350)
         self.progress_bar.grid(column=1, columnspan=3, row=4)
+        self.mode_label = ttk.Label(self.window, text="Mode:")
+        self.mode_label.grid(column=1, row=5)
+        self.mode_ecb_radiobutton = ttk.Radiobutton(self.window, text="ECB", variable=self.mode, value="ECB")
+        self.mode_ecb_radiobutton.grid(column=2, row=5)
+        self.mode_cbc_radiobutton = ttk.Radiobutton(self.window, text="CBC", variable=self.mode, value="CBC")
+        self.mode_cbc_radiobutton.grid(column=3, row=5)
         self.connection_status_label = ttk.Label(self.window, text="Connection status:")
         self.connection_status_label.grid(column=1, row=6)
         self.connected_label = ttk.Label(self.window, text="disconnected")
@@ -120,6 +132,11 @@ class ConnectionWindow:
         self.address_label.grid(column=1, row=8)
         self.connect_button = ttk.Button(self.window, text="Connect", command=self.connect)
         self.connect_button.grid(column=2, columnspan=2, row=6, rowspan=3, sticky='e')
+
+    def check_modes(self):
+        if self.mode.get() not in ["ECB", "CBC"]:
+            return False
+        return True
 
     def update_logs(self):
         for i in range(len(self.messages)):
@@ -130,25 +147,26 @@ class ConnectionWindow:
                 tk.Label(self.log_space, text=self.messages[i], height=30).grid(row=i)
 
     def send_message(self):
+        if not self.check_modes():
+            return
         message = self.input_space.get()
         self.messages.append(message)
         self.update_logs()
-        self.client.send_message(message)
+        self.client.send_message(message, self.mode.get())
         self.input_space.delete(0, len(self.input_space.get()))
 
     def send_file(self):
-        file_path = filedialog.askopenfilename(initialdir="/", title="Select a File",
-                                                    filetypes=(("Text files", "*.txt*"), ("all files", "*.*")))
-        mode = simpledialog.askstring(title="Select a mode", prompt="\n".join(MODES))
-        if mode not in MODES:
+        if not self.check_modes():
             return
-        threading.Thread(target=self.send_file_thread,args=(file_path,mode)).start()
+        file_path = filedialog.askopenfilename(initialdir="/", title="Select a File",
+                                                    filetypes=(("all files", "*.*"),))
+        threading.Thread(target=self.send_file_thread,args=(file_path, self.mode.get())).start()
 
     def send_file_thread(self, file_path, mode):
         self.connect_button.config(state=tk.DISABLED)
         self.send_file_button.config(state=tk.DISABLED)
         self.send_message_button.config(state=tk.DISABLED)
-        self.client.send_file(file_path)
+        self.client.send_file(file_path, mode)
         self.connect_button.config(state=tk.NORMAL)
         self.send_file_button.config(state=tk.NORMAL)
         self.send_message_button.config(state=tk.NORMAL)
