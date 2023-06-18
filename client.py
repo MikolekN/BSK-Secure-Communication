@@ -6,6 +6,7 @@ import threading
 import os
 from time import sleep
 
+import AES
 import key
 from constants import HOST, PORT
 
@@ -70,57 +71,56 @@ class Client:
                     break
 
     def send_message(self, message):
-        self.sock.send("t".encode())
-        self.sock.send(message.encode())
+        self.sock.send("t".encode('utf-8'))
+        ciphered_message = AES.AES_algorithm.encrypt_message_CBC(message, self.session_key)
+        self.sock.send(ciphered_message)
 
     def send_file(self, file_path):
-        self.progress_bar_active = True
-        self.sock.send("f".encode())
+        self.sock.send("f".encode('utf-8'))
         file_name = os.path.basename(file_path)
         dir_path = os.path.dirname(file_path)
         new_file_path = dir_path + "/new_" + file_name
         file_size = os.path.getsize(file_path)
         message = f"{new_file_path}|{file_size}"
-        self.sock.send(message.encode())
-        sleep(2)
-        parts = int(int(file_size) / 1024) + 1
-        percent = 100 / parts
-        with open(file_path, "rb") as file:
-            while True:
-                message = file.read(1024)
-                if not message:
-                    break
-                self.sock.send(message)
-                self.progress_bar_value += percent
-        self.progress_bar_active = False
-        self.progress_bar_value = 0
+        ciphered_message = AES.AES_algorithm.encrypt_message_CBC(message, self.session_key)
+        sleep(1)
+        self.sock.send(ciphered_message)
+        sleep(1)
+        ciphered_file = AES.AES_algorithm.encrypt_file_CBC(file_path, self.session_key)
+        start = 0
+        step = 1024
+        end = step
+        length = sys.getsizeof(ciphered_file) - 33
+        while start < length:
+            chunk = ciphered_file[start:end]
+            self.sock.send(chunk)
+            start = end
+            end += step
 
     def receive_message(self):
-        message = self.sock.recv(1024).decode('utf-8')
+        message = self.sock.recv(1024)
         if not message:
             return False
-        self.messages.append(message)
+        deciphered_message = AES.AES_algorithm.decrypt_message_CBC(message, self.session_key)
+        self.messages.append(deciphered_message)
         return True
 
     def receive_file(self):
-        self.progress_bar_active = True
         message = self.sock.recv(1024)
-        file_path, file_size = message.decode('utf-8').split("|")
+        if not message:
+            return False
+        deciphered_message = AES.AES_algorithm.decrypt_message_CBC(message, self.session_key)
+        file_path, file_size = deciphered_message.split("|")
         file_bytes = b""
-        parts = int(int(file_size) / 1024) + 1
-        percent = 100 / parts
         while True:
             message = self.sock.recv(1024)
-            if not message:
-                self.progress_bar_active = False
-                self.progress_bar_value = 0
-                return False
             file_bytes += message
-            if sys.getsizeof(file_bytes) - 33 >= int(file_size):
+            """if sys.getsizeof(file_bytes) - 33 >= int(file_size):
+                break"""
+            if message[-5:] == b"<END>":
                 break
-            self.progress_bar_value += percent
+        file_bytes = file_bytes[:-5]
+        deciphered_file_bytes = AES.AES_algorithm.decrypt_file_CBC(file_bytes, self.session_key)
         with open(file_path, "wb") as file:
-            file.write(file_bytes)
-        self.progress_bar_active = False
-        self.progress_bar_value = 0
+            file.write(deciphered_file_bytes)
         return True

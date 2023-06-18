@@ -18,7 +18,6 @@ print(server_public_key)
 
 def generate_session_key(length=32):
     session_key = os.urandom(length)
-
     return session_key
 
 
@@ -35,6 +34,7 @@ def handle_client_connection(client):
         if not message:
             break
         broadcast_message(message, client)
+        print(message)
 
     client.close()
     index = clients.index(client)

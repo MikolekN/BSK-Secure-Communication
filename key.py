@@ -23,11 +23,10 @@ class Key:
 
     @staticmethod
     def get_private_key(login, password):
-        with open(f"{os.path.curdir}/private_keys/{login}.pem", "r") as f:
+        with open(f"{os.path.curdir}/private_keys/{login}.pem", "rb") as f:
             key_data = f.read()
-            ciphered_private_key = rsa.PrivateKey.load_pkcs1(key_data.encode('utf8'))
-        #private_key = AES.AES.decrypt_message(ciphered_private_key, sha256(password.encode()).hexdigest())
-        private_key = ciphered_private_key
+        private_key = AES.AES_algorithm.decrypt_message_CBC(key_data, sha256(password.encode()).digest())
+        private_key = rsa.PrivateKey.load_pkcs1(private_key)
         return private_key
 
     @staticmethod
@@ -49,10 +48,9 @@ class Key:
 
     @staticmethod
     def __set_private_key(login, password, private_key):
-        #ciphered_private_key = AES.AES.encrypt_message(private_key, sha256(password.encode()).hexdigest())
-        ciphered_private_key = private_key
-        with open(f"{os.path.curdir}/private_keys/{login}.pem", "w") as f:
-            f.write(ciphered_private_key.save_pkcs1("PEM").decode('utf8'))
+        ciphered_private_key = AES.AES_algorithm.encrypt_message_CBC((private_key.save_pkcs1()).decode('utf-8'), sha256(password.encode()).digest())
+        with open(f"{os.path.curdir}/private_keys/{login}.pem", "wb") as f:
+            f.write(ciphered_private_key)
 
     @staticmethod
     def set_keys(login, password):
