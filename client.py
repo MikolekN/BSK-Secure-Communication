@@ -7,12 +7,10 @@ import os
 from time import sleep
 
 import key
+from constants import HOST, PORT
 
 
 class Client:
-    host = '127.0.0.1'
-    port = 20001
-
     login = None
     password = None
     public_key = None
@@ -41,7 +39,7 @@ class Client:
     def connect(self):
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.sock.connect((self.host, self.port))
+            self.sock.connect((HOST, PORT))
             self.server_public_key = rsa.PublicKey.load_pkcs1(self.sock.recv(1024))
             self.sock.send(self.public_key.save_pkcs1())
             enc_session_key = self.sock.recv(1024)

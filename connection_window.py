@@ -5,7 +5,7 @@ from tkinter import font
 from tkinter import filedialog, simpledialog
 from tkinter import ttk
 import dark_theme
-from constants import DARK_MODE, MODES
+from constants import DARK_MODE, MODES, HOST, PORT
 
 """
 connection_window.py
@@ -173,7 +173,7 @@ class ConnectionWindow:
         self.connected_label.config(text="Awaiting connection...")
         if self.client.connect():
             self.connected_label.config(text="connected")
-            self.address_label.config(text="192.168.0.0:1234")
+            self.address_label.config(text=f"{HOST}:{PORT}")
             self.connect_button.config(text="Disconnect", command=self.disconnect)
         else:
             self.connected_label.config(text="disconnected")
