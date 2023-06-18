@@ -29,6 +29,7 @@ class ConnectionWindow:
 
     client = None
     receive_thread = None
+    progress_bar_thread = None
 
     def __init__(self, client):
         self.client = client
@@ -84,6 +85,8 @@ class ConnectionWindow:
             dark_theme.make_dark_theme(self.window)
         self.receive_thread = threading.Thread(target=self.receive_messages)
         self.receive_thread.start()
+        self.progress_bar_thread = threading.Thread(target=self.set_progress_bar)
+        self.progress_bar_thread.start()
         self.window.mainloop()
 
     def layout(self):
@@ -139,7 +142,16 @@ class ConnectionWindow:
         mode = simpledialog.askstring(title="Select a mode", prompt="\n".join(MODES))
         if mode not in MODES:
             return
-        # self.client.send_file(message)
+        threading.Thread(target=self.send_file_thread,args=(file_path,mode)).start()
+
+    def send_file_thread(self, file_path, mode):
+        self.connect_button.config(state=tk.DISABLED)
+        self.send_file_button.config(state=tk.DISABLED)
+        self.send_message_button.config(state=tk.DISABLED)
+        self.client.send_file(file_path)
+        self.connect_button.config(state=tk.NORMAL)
+        self.send_file_button.config(state=tk.NORMAL)
+        self.send_message_button.config(state=tk.NORMAL)
 
     def receive_messages(self):
         while True:
@@ -148,6 +160,14 @@ class ConnectionWindow:
                 message = self.client.messages.pop(0)
                 self.messages.append(message)
                 self.update_logs()
+
+    def set_progress_bar(self):
+        while True:
+            time.sleep(0.5)
+            if self.client.progress_bar_active:
+                self.progress_bar.config(value=self.client.progress_bar_value)
+            else:
+                self.progress_bar.config(value=0)
 
     def connect(self):
         self.connected_label.config(text="Awaiting connection...")

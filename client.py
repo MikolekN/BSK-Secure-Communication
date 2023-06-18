@@ -27,6 +27,8 @@ class Client:
     send_thread = None
 
     messages = []
+    progress_bar_active = False
+    progress_bar_value = 0
 
     def __init__(self, login, password):
         self.login = login
@@ -77,6 +79,7 @@ class Client:
         self.sock.send(message.encode())
 
     def send_file(self, file_path):
+        self.progress_bar_active = True
         self.sock.send("f".encode())
         file_name = os.path.basename(file_path)
         dir_path = os.path.dirname(file_path)
@@ -85,10 +88,17 @@ class Client:
         message = f"{new_file_path}|{file_size}"
         self.sock.send(message.encode())
         sleep(2)
+        parts = int(int(file_size) / 1024) + 1
+        percent = 100 / parts
         with open(file_path, "rb") as file:
             while True:
                 message = file.read(1024)
+                if not message:
+                    break
                 self.sock.send(message)
+                self.progress_bar_value += percent
+        self.progress_bar_active = False
+        self.progress_bar_value = 0
 
     def receive_message(self):
         message = self.sock.recv(1024).decode('utf-8')
@@ -98,16 +108,24 @@ class Client:
         return True
 
     def receive_file(self):
+        self.progress_bar_active = True
         message = self.sock.recv(1024)
         file_path, file_size = message.decode('utf-8').split("|")
         file_bytes = b""
+        parts = int(int(file_size) / 1024) + 1
+        percent = 100 / parts
         while True:
             message = self.sock.recv(1024)
             if not message:
+                self.progress_bar_active = False
+                self.progress_bar_value = 0
                 return False
             file_bytes += message
             if sys.getsizeof(file_bytes) - 33 >= int(file_size):
                 break
+            self.progress_bar_value += percent
         with open(file_path, "wb") as file:
             file.write(file_bytes)
+        self.progress_bar_active = False
+        self.progress_bar_value = 0
         return True
