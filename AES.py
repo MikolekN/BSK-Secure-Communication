@@ -1,3 +1,4 @@
+import sys
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 from Crypto.Util.Padding import unpad
@@ -20,6 +21,8 @@ class AES_algorithm:
 
     @staticmethod
     def decrypt_message_CBC(message, key):
+        if sys.getsizeof(message) - 33 == 0:
+            return ""
         iv = message[:AES.block_size]
         content = message[AES.block_size:]
         cipher = AES.new(key, AES.MODE_CBC, iv)

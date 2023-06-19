@@ -2,7 +2,7 @@ import threading
 import time
 import tkinter as tk
 from tkinter import font
-from tkinter import filedialog, simpledialog
+from tkinter import filedialog
 from tkinter import ttk
 import dark_theme
 from constants import DARK_MODE, HOST, PORT
@@ -35,6 +35,7 @@ class ConnectionWindow:
     progress_bar_thread = None
     send_file_thread = None
     mode = None
+    closing = False
 
     def __init__(self, client):
         self.client = client
@@ -148,7 +149,7 @@ class ConnectionWindow:
                 tk.Label(self.log_space, text=self.messages[i], height=30).grid(row=i)
 
     def send_message(self):
-        if not self.client.sock:
+        if self.client.disconnected:
             return
         if not self.check_modes():
             return
@@ -159,7 +160,7 @@ class ConnectionWindow:
         self.input_space.delete(0, len(self.input_space.get()))
 
     def send_file(self):
-        if not self.client.sock:
+        if self.client.disconnected:
             return
         if not self.check_modes():
             return
@@ -181,6 +182,8 @@ class ConnectionWindow:
 
     def receive_messages(self):
         while True:
+            if self.closing:
+                break
             time.sleep(1)
             while len(self.client.messages) > 0:
                 message = self.client.messages.pop(0)
@@ -189,6 +192,8 @@ class ConnectionWindow:
 
     def set_progress_bar(self):
         while True:
+            if self.closing:
+                break
             time.sleep(0.5)
             if self.client.progress_bar_active:
                 self.progress_bar.config(value=self.client.progress_bar_value)
@@ -211,8 +216,12 @@ class ConnectionWindow:
         self.connect_button.config(text="Connect", command=self.connect)
 
     def close_connection(self):
-        # code for disconnecting, etc.
+        self.closing = True
         self.disconnect()
-        if not self.receive_thread:
-            pass
+        if self.receive_thread:
+            self.receive_thread.join()
+        if self.progress_bar_thread:
+            self.progress_bar_thread.join()
+        if self.send_file_thread:
+            self.send_file_thread.join()
         self.window.destroy()

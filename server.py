@@ -2,7 +2,7 @@ import threading
 import socket
 import rsa
 import os
-from constants import HOST, PORT
+from constants import HOST, PORT, DISCONNECT_MESSAGE
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((HOST, PORT))
@@ -28,15 +28,15 @@ def handle_client_connection(client):
         message = client.recv(1024)
         if not message:
             break
+        print(message)
+        if message == DISCONNECT_MESSAGE.encode():
+            clients.remove(client)
+            client.close()
+            break
         broadcast_message(message, client)
 
-    client.close()
-    index = clients.index(client)
-    clients.remove(index)
 
 # the main function to receive client connection
-
-
 def receive_client_connection():
     session_key = generate_session_key()
     print(f"session_key: {session_key}")

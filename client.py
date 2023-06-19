@@ -8,7 +8,7 @@ from time import sleep
 
 import AES
 import key
-from constants import HOST, PORT
+from constants import HOST, PORT, DISCONNECT_MESSAGE
 
 
 class Client:
@@ -27,6 +27,8 @@ class Client:
     progress_bar_active = False
     progress_bar_value = 0
 
+    disconnected = False
+
     def __init__(self, login, password):
         self.login = login
         self.password = password
@@ -36,6 +38,7 @@ class Client:
     # Zawiera wszystkie potrzebne akcje od utworzenia socketa do otrzymania klucza sesyjnego.
     # Powinno zwracać wartość bool określającą czy nawiązanie połączenia zakończyło się pomyślnie czy nie.
     def connect(self):
+        self.disconnected = False
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.connect((HOST, PORT))
@@ -54,7 +57,17 @@ class Client:
 
     # Zerwanie połączenia z serwerem.
     def disconnect(self):
-        pass
+        s = False
+        try:
+            self.sock.send(DISCONNECT_MESSAGE.encode())
+            s = True
+        except:
+            pass
+        self.disconnected = True
+        if self.receive_thread:
+            self.receive_thread.join()
+        if s:
+            self.sock.close()
 
     def send_message(self, message, mode):
         message_info = f"t|{mode}"
@@ -116,17 +129,20 @@ class Client:
 
     def receive(self):
         while True:
-            ciphered_message_info = self.sock.recv(1024)
-            message_info = AES.AES_algorithm.decrypt_message_CBC(ciphered_message_info, self.session_key)
-            msg_type, mode = message_info.split("|")
-            if not msg_type:
+            if self.disconnected:
                 break
-            if msg_type == "t":  # text
-                if not self.receive_message(mode):
+            ciphered_message_info = self.sock.recv(1024)
+            if sys.getsizeof(ciphered_message_info) - 33 != 0:
+                message_info = AES.AES_algorithm.decrypt_message_CBC(ciphered_message_info, self.session_key)
+                msg_type, mode = message_info.split("|")
+                if not msg_type:
                     break
-            elif msg_type == "f":  # file
-                if not self.receive_file(mode):
-                    break
+                if msg_type == "t":  # text
+                    if not self.receive_message(mode):
+                        break
+                elif msg_type == "f":  # file
+                    if not self.receive_file(mode):
+                        break
 
     def receive_message(self, mode):
         message = self.sock.recv(1024)
