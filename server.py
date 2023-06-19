@@ -28,7 +28,6 @@ def handle_client_connection(client):
         message = client.recv(1024)
         if not message:
             break
-        print(message)
         if message == DISCONNECT_MESSAGE.encode():
             clients.remove(client)
             client.close()
@@ -45,7 +44,7 @@ def receive_client_connection():
             client, address = server.accept()
             print(f'connection is established with {str(address)}')
             clients.append(client)
-            client_public_key = client.recv(1024)
+            client_public_key = client.recv(2048)
             print(client_public_key)
             enc_session_key = rsa.encrypt(session_key, rsa.PublicKey.load_pkcs1(client_public_key))
             client.send(enc_session_key)

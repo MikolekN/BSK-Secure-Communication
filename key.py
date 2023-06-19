@@ -54,7 +54,7 @@ class Key:
 
     @staticmethod
     def set_keys(login, password):
-        public_key, private_key = rsa.newkeys(1024)
+        public_key, private_key = rsa.newkeys(2048)
         Key.__set_public_key(login, public_key)
         Key.__set_private_key(login, password, private_key)
         return True
