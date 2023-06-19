@@ -1,6 +1,6 @@
 import random
 import string
-
+from Crypto.Cipher import AES as AESS
 import rsa
 import os
 from hashlib import sha256
@@ -18,16 +18,22 @@ class Key:
     def get_public_key(login):
         with open(f"{os.path.curdir}/public_keys/{login}.pem", "r") as f:
             key_data = f.read()
-            public_key = rsa.PublicKey.load_pkcs1(key_data.encode('utf8'))
+        public_key = rsa.PublicKey.load_pkcs1(key_data.encode('utf8'))
         return public_key
 
     @staticmethod
     def get_private_key(login, password):
         with open(f"{os.path.curdir}/private_keys/{login}.pem", "rb") as f:
             key_data = f.read()
-        private_key = AES.AES_algorithm.decrypt_message_CBC(key_data, sha256(password.encode()).digest())
-        private_key = rsa.PrivateKey.load_pkcs1(private_key)
-        return private_key
+        iv = key_data[:AESS.block_size]
+        content = key_data[AESS.block_size:]
+        cipher = AESS.new(sha256(password.encode()).digest(), AESS.MODE_CBC, iv)
+        private_key = cipher.decrypt(content)
+        try:
+            private_key = rsa.PrivateKey.load_pkcs1(private_key)
+            return private_key
+        except:
+            return None
 
     @staticmethod
     def get_keys(login, password):
@@ -36,6 +42,8 @@ class Key:
     @staticmethod
     def check_password(login, password):
         public_key, private_key = Key.get_keys(login, password)
+        if private_key is None:
+            return False
         control_message = ''.join(
             random.choice(string.ascii_letters + string.digits + string.punctuation) for _ in range(64))
         returned_message = rsa.decrypt(rsa.encrypt(control_message.encode(), public_key), private_key).decode('utf8')
