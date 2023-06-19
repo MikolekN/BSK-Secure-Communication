@@ -12,6 +12,13 @@ login_window.py
 """
 
 
+def create_key_folders():
+    if not os.path.exists(f"{os.path.curdir}/public_keys"):
+        os.makedirs(f"{os.path.curdir}/public_keys")
+    if not os.path.exists(f"{os.path.curdir}/private_keys"):
+        os.makedirs(f"{os.path.curdir}/private_keys")
+
+
 class LoginWindow:
     window = None
     login_label = None
@@ -139,6 +146,7 @@ class LoginWindow:
         self.response.grid(columnspan=5, row=8)
 
     def register_func(self):
+        create_key_folders()
         if self.login_entry.get() == "":
             self.response.config(text="You need to provide a login!")
             return
@@ -158,6 +166,7 @@ class LoginWindow:
             self.response.config(text="There was an error while registering!")
 
     def login_func(self):
+        create_key_folders()
         if self.login_entry.get() == "":
             self.response.config(text="You need to provide a login!")
             return
