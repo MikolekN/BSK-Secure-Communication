@@ -22,7 +22,6 @@ class Client:
     session_key = None
 
     receive_thread = None
-    send_thread = None
 
     messages = []
     progress_bar_active = False

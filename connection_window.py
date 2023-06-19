@@ -147,6 +147,8 @@ class ConnectionWindow:
                 tk.Label(self.log_space, text=self.messages[i], height=30).grid(row=i)
 
     def send_message(self):
+        if not self.client.sock:
+            return
         if not self.check_modes():
             return
         message = self.input_space.get()
@@ -156,6 +158,8 @@ class ConnectionWindow:
         self.input_space.delete(0, len(self.input_space.get()))
 
     def send_file(self):
+        if not self.client.sock:
+            return 
         if not self.check_modes():
             return
         file_path = filedialog.askopenfilename(initialdir="/", title="Select a File",
