@@ -181,9 +181,7 @@ class ConnectionWindow:
         self.send_message_button.config(state=tk.NORMAL)
 
     def receive_messages(self):
-        while True:
-            if self.closing:
-                break
+        while not self.closing:
             time.sleep(1)
             while len(self.client.messages) > 0:
                 message = self.client.messages.pop(0)
@@ -191,9 +189,7 @@ class ConnectionWindow:
                 self.update_logs()
 
     def set_progress_bar(self):
-        while True:
-            if self.closing:
-                break
+        while not self.closing:
             time.sleep(0.5)
             if self.client.progress_bar_active:
                 self.progress_bar.config(value=self.client.progress_bar_value)
@@ -220,8 +216,6 @@ class ConnectionWindow:
         self.disconnect()
         if self.receive_thread:
             self.receive_thread.join()
-        if self.progress_bar_thread:
-            self.progress_bar_thread.join()
         if self.send_file_thread:
             self.send_file_thread.join()
         self.window.destroy()
