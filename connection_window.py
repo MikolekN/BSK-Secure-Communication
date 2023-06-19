@@ -5,7 +5,7 @@ from tkinter import font
 from tkinter import filedialog, simpledialog
 from tkinter import ttk
 import dark_theme
-from constants import DARK_MODE, MODES, HOST, PORT
+from constants import DARK_MODE, HOST, PORT
 
 """
 connection_window.py
@@ -33,6 +33,7 @@ class ConnectionWindow:
     client = None
     receive_thread = None
     progress_bar_thread = None
+    send_file_thread = None
     mode = None
 
     def __init__(self, client):
@@ -159,14 +160,17 @@ class ConnectionWindow:
 
     def send_file(self):
         if not self.client.sock:
-            return 
+            return
         if not self.check_modes():
             return
         file_path = filedialog.askopenfilename(initialdir="/", title="Select a File",
-                                                    filetypes=(("all files", "*.*"),))
-        threading.Thread(target=self.send_file_thread,args=(file_path, self.mode.get())).start()
+                                               filetypes=(("all files", "*.*"),))
+        if not file_path:
+            return
+        self.send_file_thread = threading.Thread(target=self.send_file_thread_function,
+                                                 args=(file_path, self.mode.get())).start()
 
-    def send_file_thread(self, file_path, mode):
+    def send_file_thread_function(self, file_path, mode):
         self.connect_button.config(state=tk.DISABLED)
         self.send_file_button.config(state=tk.DISABLED)
         self.send_message_button.config(state=tk.DISABLED)
@@ -208,5 +212,7 @@ class ConnectionWindow:
 
     def close_connection(self):
         # code for disconnecting, etc.
+        self.disconnect()
+        if not self.receive_thread:
+            pass
         self.window.destroy()
-
