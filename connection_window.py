@@ -22,7 +22,7 @@ class ConnectionWindow:
     connected_label = None
     address_label = None
     connect_button = None
-    messages = ["Hallo1", "Hallo2", "Hallo3"]
+    messages = []
     message_pic = None
     file_pic = None
     progress_bar = None
