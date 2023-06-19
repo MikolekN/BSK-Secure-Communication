@@ -70,9 +70,12 @@ class Client:
         self.sock.send(ciphered_message)
 
     def send_file(self, file_path, mode):
+        self.progress_bar_active = True
+
         message_info = f"f|{mode}"
         ciphered_message_info = AES.AES_algorithm.encrypt_message_CBC(message_info, self.session_key)
         self.sock.send(ciphered_message_info)
+
         file_name = os.path.basename(file_path)
         dir_path = os.path.dirname(file_path)
         new_file_path = dir_path + "/new_" + file_name
@@ -87,12 +90,16 @@ class Client:
         sleep(1)
         self.sock.send(ciphered_message)
         sleep(1)
+
+        percent = 50 / (int(int(file_size) / 1024) + 1)
+
         if mode == "ECB":
             ciphered_file = AES.AES_algorithm.encrypt_file_ECB(file_path, self.session_key)
         elif mode == "CBC":
             ciphered_file = AES.AES_algorithm.encrypt_file_CBC(file_path, self.session_key)
         else:
             return
+        self.progress_bar_value = 50
         start = 0
         step = 1024
         end = step
@@ -102,6 +109,11 @@ class Client:
             self.sock.send(chunk)
             start = end
             end += step
+            self.progress_bar_value += percent
+
+        self.progress_bar_value = 100
+        self.progress_bar_active = False
+        self.progress_bar_value = 0
 
     def receive(self):
         while True:
@@ -131,6 +143,8 @@ class Client:
         return True
 
     def receive_file(self, mode):
+        self.progress_bar_active = True
+
         message = self.sock.recv(1024)
         if not message:
             return False
@@ -141,12 +155,18 @@ class Client:
         else:
             return
         file_path, file_size = deciphered_message.split("|")
+
+        percent = 50 / (int(int(file_size) / 1024) + 1)
+
         file_bytes = b""
         while True:
             message = self.sock.recv(1024)
             file_bytes += message
             if sys.getsizeof(file_bytes) - 33 >= int(file_size):
                 break
+            self.progress_bar_value += percent
+        self.progress_bar_value = 50
+
         if mode == "ECB":
             deciphered_file_bytes = AES.AES_algorithm.decrypt_file_ECB(file_bytes, self.session_key)
         elif mode == "CBC":
@@ -155,4 +175,7 @@ class Client:
             return
         with open(file_path, "wb") as file:
             file.write(deciphered_file_bytes)
+        self.progress_bar_value = 100
+        self.progress_bar_active = False
+        self.progress_bar_value = 0
         return True
